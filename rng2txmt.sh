@@ -12,7 +12,8 @@ then
   exit 127
 fi
 
-result_dir="test/Generated Language Grammars"
+base_dir="."
+result_dir="$base_dir/Generated Language Grammars"
 name=`basename -s .rng $1`;
 xml_result="$result_dir/$name.plist.xml"
 plist_result="$result_dir/$name.plist"
