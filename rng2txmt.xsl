@@ -16,7 +16,7 @@
   <!-- = Check for obvious empty definitions. = -->
   <!-- ======================================== -->
   <!--
-    TODO improve definition empty to take references into account?
+    TODO improve empty definition check to take references into account?
   -->
   <xsl:key name="definitions" match="define[not(empty)]" use="@name"/>
 
@@ -47,6 +47,34 @@
     <xsl:if test="define">
       <key>repository</key>
       <dict>
+        <key>defaults</key>
+        <!--
+          FIXME Check if this is correct.
+        -->
+        <dict>
+          <key>begin</key>
+          <string>(&lt;)([-_a-zA-Z0-9:]+)(&gt;)</string>
+          <key>end</key>
+          <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
+          <key>captures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.tag.xml</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>invalid.illegal.tag.xml</string>
+            </dict>
+            <key>3</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.tag.xml</string>
+            </dict>
+          </dict>
+        </dict>
         <xsl:apply-templates select="define"/>
       </dict>
     </xsl:if>
@@ -81,24 +109,16 @@
     <dict>
       <!--
         FIXME add (clever?) namespace support
-      -->
-
-      <!--
         FIXME add meta.tag.xml at appropriate place.
-      -->
-      <!-- <key>name</key>
-      <string>meta.tag.xml</string> -->
+        FIXME try and check both structures.
 
-      <!--
+        <key>name</key>
+        <string>meta.tag.xml</string>
         FIXME This match the tag, not the structure
-      -->
-      <!-- <key>begin</key>
-      <string>(&lt;?)s*(<xsl:value-of select="@name"/>)</string>
-      <key>end</key>
-      <string>(?&gt;)</string> -->
-
-      <!--
-          CHANGED This should match the structure. Need construction which include both?
+        <key>begin</key>
+        <string>(&lt;?)s*(<xsl:value-of select="@name"/>)</string>
+        <key>end</key>
+        <string>(?&gt;)</string>
       -->
       <key>begin</key>
       <string>(&lt;)\s*(<xsl:value-of select="@name"/>)\s*((.*?)\s*=\s*(?:(\".*?\")|('.*?')))*?(&gt;)</string>
@@ -168,34 +188,9 @@
       <key>patterns</key> <!-- check for empty elements, attributes, ... -->
       <array>
         <xsl:apply-templates/>
-        <!--
-          FIXME Check if this is correct.
-        -->
         <dict>
-          <!-- <key>name</key>
-          <string>invalid.illegal.tag.xml</string> -->
-          <key>begin</key>
-          <string>(&lt;)([-_a-zA-Z0-9:]+)(&gt;)</string>
-          <key>end</key>
-          <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
-          <key>captures</key>
-          <dict>
-            <key>1</key>
-            <dict>
-              <key>name</key>
-              <string>punctuation.definition.tag.xml</string>
-            </dict>
-            <key>2</key>
-            <dict>
-              <key>name</key>
-              <string>invalid.illegal.tag.xml</string>
-            </dict>
-            <key>3</key>
-            <dict>
-              <key>name</key>
-              <string>punctuation.definition.tag.xml</string>
-            </dict>
-          </dict>
+          <key>include</key>
+          <string>#defaults</string> <!-- ensure non-collision with rng definition names -->
         </dict>
       </array>
     </dict>
@@ -226,10 +221,7 @@
   </xsl:template>
   
   <xsl:template match="ref">
-    <!--
-      FIXME use a for each?
-    -->
-    <!-- FIXME check for empty references - using keys? -->
+    <!-- CHANGED check for empty references - using keys? -->
     <xsl:if test="key('definitions', @name)">
       <dict>
         <key>include</key>
