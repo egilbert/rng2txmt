@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
   TODO completely redesign with grammar expansions in mind?
+  TODO add parameter for namespace prefixes
 -->
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -10,22 +11,51 @@
 
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
     doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
-    doctype-system="http://www.apple.com/DTDs/PropertyList-1.0.dtd" -->
+    doctype-system="http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
 
     <!-- ======================= -->
     <!-- = Regular expressions = -->
     <!-- ======================= -->
-
-    <xsl:variable name="StartNameChar"  select="'([_a-zA-Z])'"      />
-    <xsl:variable name="NameChar"       select="'([-_a-zA-Z\.0-9)'" />
+    
+    <xsl:variable name="StartNameChar"  select="'[_a-zA-Z]'"      />
+    <xsl:variable name="NameChar"       select="'[-_a-zA-Z\.0-9]'" />
     <!-- qualified name (*without* namespace) -->
     <!-- TODO prevent qualified names from starting with xml or any similar -->
-    <xsl:variable name="Name"
-        select="'{$StartNameChar}{$NameChar}*'"/>
+    <xsl:variable name="Name">
+      <xsl:value-of select="$StartNameChar"/>
+      <xsl:value-of select="$NameChar"/>
+      <xsl:text>*</xsl:text>
+    </xsl:variable>
     <!-- match attributes and setting their value. / ! \ contains 2 groups. -->
+
+    <!-- match quoted strings -->
+    <!-- FIXME deal with \" -->
+    <xsl:variable name="DoubleQuotedString"
+      select="'\&quot;[^\&quot;]*\&quot;'"/>
+
+    <!-- /!\ single/double quotes inverted to avoid XPath failure -->
+    <xsl:variable name="SingleQuotedString"
+      select='"&apos;[^&apos;]*?&apos;"'/>
+
     <!-- FIXME XPath bugs on this -->
     <!-- FIXME name groups (if groups can be named...)-->
-    <xsl:variable name="attributes" select="'((.*?)\s*=\s*(?:(\&quot;.*?\&quot;)|(&amp;apos;.*?&amp;apos;)))*?'"/>
+    <xsl:variable name="Attribute">
+      <xsl:text>(</xsl:text>
+      <xsl:value-of select="$Name"/>
+      <xsl:text>)\s*=\s*(?:(</xsl:text>
+      <xsl:value-of select="$DoubleQuotedString"/>
+      <xsl:text>)|(</xsl:text>
+      <xsl:value-of select="$SingleQuotedString"/>
+      <xsl:text>))</xsl:text>
+    </xsl:variable>
+
+    <xsl:variable name="Attributes">
+      <xsl:text>(?:</xsl:text>
+      <xsl:value-of select="$Attribute"/>
+      <xsl:text>\s*)*</xsl:text>
+    </xsl:variable>
+    <!-- <xsl:variable name="attribute"
+      select="'(({$Name})\s*=\s*(?:({$DoubleQuotedString})|({$SingleQuotedString})))*?'"/> -->
     <!-- ((.*?)\s*=\s*(?:(\&quot;.*?\&quot;)|(&apos;.*?&apos;)))*? -->
 
   <!-- ======================================== -->
@@ -150,9 +180,9 @@
         <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
         <xsl:value-of select="@name"/> <!-- Match tag name -->
         <xsl:text>)\s*(</xsl:text>
-        <xsl:value-of select="$attributes"/> <!-- Match attributes -->
+        <xsl:value-of select="$Attributes"/> <!-- Match attribute -->
         <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
-        <!-- <xsl:value-of select="concat('(&lt;)\s*(', @name, ')\s*(', $attributes, ')\s*(&gt;)')" /> -->
+        <!-- <xsl:value-of select="concat('(&lt;)\s*(', @name, ')\s*(', attributes, ')\s*(&gt;)')" /> -->
       </string>
       <!--
         CHANGED now match quoted strings
@@ -161,8 +191,6 @@
       <string>
         <xsl:text>(&lt;/)\s*(</xsl:text> <!-- Match opening tag -->
         <xsl:value-of select="@name"/> <!-- Match tag name -->
-        <xsl:text>)\s*(</xsl:text>
-        <xsl:value-of select="$attributes"/> <!-- Match attributes -->
         <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
         <!-- <xsl:value-of select="concat('(&lt;/)\s*(', @name, ')\s*(&gt;)')"/> -->
       </string>
