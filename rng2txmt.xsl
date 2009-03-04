@@ -20,7 +20,6 @@
     <xsl:variable name="StartNameChar"  select="'[_a-zA-Z]'"      />
     <xsl:variable name="NameChar"       select="'[-_a-zA-Z\.0-9]'" />
     <!-- qualified name (*without* namespace) -->
-    <!-- TODO prevent qualified names from starting with xml or any similar -->
     <xsl:variable name="Name">
       <xsl:value-of select="$StartNameChar"/>
       <xsl:value-of select="$NameChar"/>
@@ -37,7 +36,6 @@
     <xsl:variable name="SingleQuotedString"
       select='"&apos;[^&apos;]*?&apos;"'/>
 
-    <!-- FIXME XPath bugs on this -->
     <!-- FIXME name groups (if groups can be named...)-->
     <xsl:variable name="Attribute">
       <xsl:text>(</xsl:text>
@@ -54,9 +52,6 @@
       <xsl:value-of select="$Attribute"/>
       <xsl:text>\s*)*</xsl:text>
     </xsl:variable>
-    <!-- <xsl:variable name="attribute"
-      select="'(({$Name})\s*=\s*(?:({$DoubleQuotedString})|({$SingleQuotedString})))*?'"/> -->
-    <!-- ((.*?)\s*=\s*(?:(\&quot;.*?\&quot;)|(&apos;.*?&apos;)))*? -->
 
   <!-- ======================================== -->
   <!-- = Check for obvious empty definitions. = -->
@@ -106,6 +101,8 @@
               <string>
                 <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
                 <xsl:value-of select="$Name"/> <!-- Match tag name -->
+                <xsl:text>)\s*(</xsl:text>
+                <xsl:value-of select="$Attributes"/> <!-- Match attributes -->
                 <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
               </string>
               <key>end</key>
