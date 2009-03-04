@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  TODO completely redesign with grammar expansions in mind? Actually *draw* something.
+  TODO completely redesign with grammar expansions in mind?
 -->
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -10,13 +10,29 @@
 
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
     doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
-    doctype-system="http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
+    doctype-system="http://www.apple.com/DTDs/PropertyList-1.0.dtd" -->
+
+    <!-- ======================= -->
+    <!-- = Regular expressions = -->
+    <!-- ======================= -->
+
+    <xsl:variable name="StartNameChar"  select="'([_a-zA-Z])'"      />
+    <xsl:variable name="NameChar"       select="'([-_a-zA-Z\.0-9)'" />
+    <!-- qualified name (*without* namespace) -->
+    <!-- TODO prevent qualified names from starting with xml or any similar -->
+    <xsl:variable name="Name"
+        select="'{$StartNameChar}{$NameChar}*'"/>
+    <!-- match attributes and setting their value. / ! \ contains 2 groups. -->
+    <!-- FIXME XPath bugs on this -->
+    <!-- FIXME name groups (if groups can be named...)-->
+    <xsl:variable name="attributes" select="'((.*?)\s*=\s*(?:(\&quot;.*?\&quot;)|(&amp;apos;.*?&amp;apos;)))*?'"/>
+    <!-- ((.*?)\s*=\s*(?:(\&quot;.*?\&quot;)|(&apos;.*?&apos;)))*? -->
 
   <!-- ======================================== -->
   <!-- = Check for obvious empty definitions. = -->
   <!-- ======================================== -->
   <!--
-    TODO improve empty definition check to take references into account?
+    TODO improve empty definition check to take empty references chains into account.
   -->
   <xsl:key name="definitions" match="define[not(empty)]" use="@name"/>
 
@@ -50,30 +66,40 @@
         <key>defaults</key>
         <!--
           FIXME Check if this is correct.
+          TODO deal with <a/> tags
         -->
         <dict>
-          <key>begin</key>
-          <string>(&lt;)([-_a-zA-Z0-9:]+)(&gt;)</string>
-          <key>end</key>
-          <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
-          <key>captures</key>
-          <dict>
-            <key>1</key>
+          <key>patterns</key>
+          <array>
             <dict>
-              <key>name</key>
-              <string>punctuation.definition.tag.xml</string>
+              <key>begin</key>
+              <string>
+                <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+                <xsl:value-of select="$Name"/> <!-- Match tag name -->
+                <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
+              </string>
+              <key>end</key>
+              <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
+              <key>captures</key>
+              <dict>
+                <key>1</key>
+                <dict>
+                  <key>name</key>
+                  <string>punctuation.definition.tag.xml</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                  <key>name</key>
+                  <string>invalid.illegal.tag.xml</string>
+                </dict>
+                <key>3</key>
+                <dict>
+                  <key>name</key>
+                  <string>punctuation.definition.tag.xml</string>
+                </dict>
+              </dict>
             </dict>
-            <key>2</key>
-            <dict>
-              <key>name</key>
-              <string>invalid.illegal.tag.xml</string>
-            </dict>
-            <key>3</key>
-            <dict>
-              <key>name</key>
-              <string>punctuation.definition.tag.xml</string>
-            </dict>
-          </dict>
+          </array>
         </dict>
         <xsl:apply-templates select="define"/>
       </dict>
@@ -104,7 +130,6 @@
   </xsl:template>
 
   <!-- Effective construction -->
-
   <xsl:template match="element">
     <dict>
       <!--
@@ -121,12 +146,26 @@
         <string>(?&gt;)</string>
       -->
       <key>begin</key>
-      <string>(&lt;)\s*(<xsl:value-of select="@name"/>)\s*((.*?)\s*=\s*(?:(\".*?\")|('.*?')))*?(&gt;)</string>
+      <string>
+        <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+        <xsl:value-of select="@name"/> <!-- Match tag name -->
+        <xsl:text>)\s*(</xsl:text>
+        <xsl:value-of select="$attributes"/> <!-- Match attributes -->
+        <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
+        <!-- <xsl:value-of select="concat('(&lt;)\s*(', @name, ')\s*(', $attributes, ')\s*(&gt;)')" /> -->
+      </string>
       <!--
         CHANGED now match quoted strings
       -->
       <key>end</key>
-      <string>(&lt;/)\s*(<xsl:value-of select="@name"/>)\s*(&gt;)</string>
+      <string>
+        <xsl:text>(&lt;/)\s*(</xsl:text> <!-- Match opening tag -->
+        <xsl:value-of select="@name"/> <!-- Match tag name -->
+        <xsl:text>)\s*(</xsl:text>
+        <xsl:value-of select="$attributes"/> <!-- Match attributes -->
+        <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
+        <!-- <xsl:value-of select="concat('(&lt;/)\s*(', @name, ')\s*(&gt;)')"/> -->
+      </string>
       <key>beginCaptures</key>
       <dict>
         <key>1</key>
