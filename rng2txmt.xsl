@@ -89,10 +89,6 @@
       <key>repository</key>
       <dict>
         <key>defaults</key>
-        <!--
-          FIXME Check if this is correct.
-          TODO deal with <a/> tags
-        -->
         <dict>
           <key>patterns</key>
           <array>
@@ -161,8 +157,28 @@
             </dict>
           </array>
         </dict>
+        <key>attribute-defaults</key>
+        <dict>
+          <key>patterns</key>
+          <array>
+            <dict>
+              <key>match</key>
+              <string>
+                <xsl:value-of select="$Attribute"/>
+              </string>
+              <key>captures</key>
+              <dict>
+                <key>1</key>
+                <dict>
+                  <key>name</key>
+                  <string>invalid.illegal.attribute.xml</string>
+                </dict>
+              </dict>
+            </dict>
+          </array>
+        </dict>
         <xsl:apply-templates select="define"/>
-        <!-- <xsl:apply-templates select="define" mode="attributes"/> -->
+        <xsl:apply-templates select="define" mode="attributes"/>
       </dict>
     </xsl:if>
   </xsl:template>
@@ -193,7 +209,10 @@
   <xsl:template match="define[not(empty)]" mode="attributes">
     <!-- FIXME avoid calling empty definitions -->
     <!-- <xsl:template match="define[not(empty)]"> -->
-    <key><xsl:value-of select="@name"/></key>
+    <key>
+      <xsl:text>attributes-</xsl:text>
+      <xsl:value-of select="@name"/>
+    </key>
     <dict>
       <key>patterns</key>
       <array>
@@ -208,7 +227,7 @@
     <dict>
       <!--
         FIXME add (clever?) namespace support
-        FIXME add meta.tag.xml at appropriate place.
+        CHANGED add meta.tag.xml at appropriate place.
         FIXME try and check both structures.
 
         <key>name</key>
@@ -290,8 +309,12 @@
           </string>
           <key>patterns</key>
           <array>
-            <!-- <xsl:apply-templates mode="attributes"/> -->
+            <xsl:apply-templates mode="attributes"/>
             <!-- traitement des attributs -->
+            <dict>
+              <key>include</key>
+              <string>#attribute-defaults</string>
+            </dict>
           </array>
         </dict>
         <dict>
@@ -369,6 +392,10 @@
     </dict>
   </xsl:template>
   
+  <xsl:template match="element" mode="attributes">
+    <!-- Ignore elements -->
+  </xsl:template>
+  
   <xsl:template match="attribute" mode="attributes">
     <dict>
       <key>name</key>
@@ -378,8 +405,12 @@
       <key>match</key>
       <string>
         <xsl:text>(</xsl:text>
-        <xsl:value-of select="$Attribute"/>
-        <xsl:text>)</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>)\s*=\s*(?:(</xsl:text>
+        <xsl:value-of select="$DoubleQuotedString"/>
+        <xsl:text>)|(</xsl:text>
+        <xsl:value-of select="$SingleQuotedString"/>
+        <xsl:text>))</xsl:text>
       </string>
       <key>captures</key>
       <dict>
@@ -420,7 +451,7 @@
       <dict>
         <key>include</key>
         <string>
-          <xsl:text>#</xsl:text>
+          <xsl:text>#attributes-</xsl:text>
           <xsl:value-of select="@name"/>
         </string>
       </dict>
