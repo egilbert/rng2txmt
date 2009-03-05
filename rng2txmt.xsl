@@ -126,6 +126,32 @@
                 </dict>
               </dict>
             </dict>
+            <dict>
+              <key>match</key>
+              <string>
+                <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+                <xsl:value-of select="$Name"/> <!-- Match tag name -->
+                <xsl:text>)\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
+              </string>
+              <key>captures</key>
+              <dict>
+                <key>1</key>
+                <dict>
+                  <key>name</key>
+                  <string>punctuation.definition.tag.xml</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                  <key>name</key>
+                  <string>invalid.illegal.tag.xml</string>
+                </dict>
+                <key>3</key>
+                <dict>
+                  <key>name</key>
+                  <string>punctuation.definition.tag.xml</string>
+                </dict>
+              </dict>
+            </dict>
           </array>
         </dict>
         <xsl:apply-templates select="define"/>
@@ -257,6 +283,56 @@
           <string>#defaults</string> <!-- ensure non-collision with rng definition names -->
         </dict>
       </array>
+    </dict>
+    <dict>
+      <key>match</key>
+      <string>
+        <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+        <xsl:value-of select="@name"/> <!-- Match tag name -->
+        <xsl:text>)\s*(</xsl:text>
+        <xsl:value-of select="$Attributes"/> <!-- Match attribute -->
+        <xsl:text>)\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
+        <!-- <xsl:value-of select="concat('(&lt;)\s*(', @name, ')\s*(', attributes, ')\s*(&gt;)')" /> -->
+      </string>
+      <key>captures</key>
+      <dict>
+        <key>1</key>
+        <dict>
+          <key>name</key>
+          <string>punctuation.definition.tag.xml</string>
+        </dict>
+        <key>2</key>
+        <dict>
+          <key>name</key>
+          <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+        </dict>
+        <key>3</key>
+        <dict>
+          <!-- FIXME Develop grammar to catch attributes within begin/match and allow markings of unallowed attributes. -->
+          <key>name</key>
+          <string>meta.attributes.of-<xsl:value-of select="@name"/>.xml</string>
+        </dict>
+        <key>4</key>
+        <dict>
+          <key>name</key>
+          <string>entity.other.attribute-name.xml</string>
+        </dict>
+        <key>5</key>
+        <dict>
+          <key>name</key>
+          <string>string.quoted.double.xml</string>
+        </dict>
+        <key>6</key>
+        <dict>
+          <key>name</key>
+          <string>string.quoted.single.xml</string>
+        </dict>
+        <key>7</key>
+        <dict>
+          <key>name</key>
+          <string>punctuation.definition.tag.xml</string>
+        </dict>
+      </dict>
     </dict>
   </xsl:template>
   
