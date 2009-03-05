@@ -7,7 +7,10 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:rng="http://relaxng.org/ns/structure/1.0"
                 xmlns:annot="http://relaxng.org/ns/compatibility/annotations/1.0"
-                exclude-result-prefixes="rng annot">
+                exclude-result-prefixes="rng annot"
+                xmlns:exsl="http://exslt.org/common"
+                extension-element-prefixes="exsl"
+                >
 
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
     doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
@@ -57,9 +60,61 @@
   <!-- = Check for obvious empty definitions. = -->
   <!-- ======================================== -->
   <!--
-    TODO improve empty definition check to take empty references chains into account.
+    TODO improve empty definition check
   -->
-  <xsl:key name="definitions" match="define[not(empty)]" use="@name"/>
+
+  <!-- ======================================================== -->
+  <!-- = Check for empty definition (even through references) = -->
+  <!-- ======================================================== -->
+
+  <!-- = Transform a node-set of reference names to a RTF = -->
+  <xsl:template name="to-rtf">
+    <xsl:param name="nodes"/>
+    <xsl:for-each select="$nodes">
+      <name>
+        <xsl:value-of select="."/>
+      </name>
+    </xsl:for-each>
+  </xsl:template>
+
+  <!-- = Computes accessible references and return their names as a RTF = -->
+  <xsl:template name="accessible">
+    <xsl:param name="nodes"/>
+    <xsl:variable name="new-nodes" select="$nodes|//define[.//ref/@name=$nodes]/@name"/>
+    <xsl:choose>
+      <xsl:when test="count($new-nodes)=count($nodes)">
+        <!-- FIXME Either use this function directly for testing    -->
+        <!-- (and thus compute fix-point each time) or return a RTF -->
+        <!-- and use exslt. The second solution is OK, I guess.     -->
+        <xsl:call-template name="to-rtf">
+          <xsl:with-param name="nodes" select="$nodes"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="accessible">
+          <xsl:with-param name="nodes" select="$new-nodes"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+  <!-- = Actually computes accessible elements = -->
+  <xsl:variable name="accessible-elements-rtf">
+    <xsl:call-template name="accessible" mode="elements">
+      <xsl:with-param name="nodes" select="//define[.//element]/@name"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="accessible-elements"
+        select="exsl:node-set($accessible-elements-rtf)/name"/>
+
+  <!-- = Actually computes accessible attributes = -->
+  <xsl:variable name="accessible-attributes-rtf">
+    <xsl:call-template name="accessible" mode="attributes">
+      <xsl:with-param name="nodes" select="//define[.//attribute]/@name"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="accessible-attributes"
+        select="exsl:node-set($accessible-attributes-rtf)/name"/>
 
   <xsl:template match="/">
     <plist version="1.0">
@@ -194,31 +249,37 @@
     </array>
   </xsl:template>
 
-  <xsl:template match="define[not(empty)]">
-    <!-- FIXME avoid calling empty definitions -->
-    <!-- <xsl:template match="define[not(empty)]"> -->
+  <xsl:template match="define">
+    <!--
+      FIXME put test in XPath?
+    -->
+    <xsl:if test="@name=$accessible-elements">
     <key><xsl:value-of select="@name"/></key>
-    <dict>
-      <key>patterns</key>
-      <array>
-        <xsl:apply-templates/>
-      </array>
-    </dict>
+      <dict>
+        <key>patterns</key>
+        <array>
+          <xsl:apply-templates/>
+        </array>
+      </dict>
+    </xsl:if>
   </xsl:template>
 
-  <xsl:template match="define[not(empty)]" mode="attributes">
-    <!-- FIXME avoid calling empty definitions -->
-    <!-- <xsl:template match="define[not(empty)]"> -->
-    <key>
-      <xsl:text>attributes-</xsl:text>
-      <xsl:value-of select="@name"/>
-    </key>
-    <dict>
-      <key>patterns</key>
-      <array>
-        <xsl:apply-templates mode="attributes"/>
-      </array>
-    </dict>
+  <xsl:template match="define" mode="attributes">
+    <!--
+      FIXME put test in XPath?
+    -->
+    <xsl:if test="@name=$accessible-attributes">
+      <key>
+        <xsl:text>attributes-</xsl:text>
+        <xsl:value-of select="@name"/>
+      </key>
+      <dict>
+        <key>patterns</key>
+        <array>
+          <xsl:apply-templates mode="attributes"/>
+        </array>
+      </dict>
+    </xsl:if>
   </xsl:template>
 
 
@@ -332,11 +393,12 @@
           <key>patterns</key>
           <array>
             <xsl:apply-templates/>
+            <dict>
+              <key>include</key>
+              <!-- FIXME ensure non-collision with rng definition names -->
+              <string>#defaults</string>
+            </dict>
           </array>
-        </dict>
-        <dict>
-          <key>include</key>
-          <string>#defaults</string> <!-- ensure non-collision with rng definition names -->
         </dict>
       </array>
     </dict>
@@ -435,7 +497,7 @@
   
   <xsl:template match="ref">
     <!-- CHANGED check for empty references -->
-    <xsl:if test="key('definitions', @name)">
+    <xsl:if test="@name=$accessible-elements">
       <dict>
         <key>include</key>
         <string>
@@ -447,7 +509,7 @@
   </xsl:template>
   
   <xsl:template match="ref" mode="attributes">
-    <xsl:if test="key('definitions', @name)">
+    <xsl:if test="@name=$accessible-attributes">
       <dict>
         <key>include</key>
         <string>
@@ -457,10 +519,9 @@
       </dict>
     </xsl:if>
   </xsl:template>
-
+  
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="attributes"/>
-
   
   <!-- <xsl:template match="*"/> --> <!-- Testing -->
   
