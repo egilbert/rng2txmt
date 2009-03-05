@@ -125,6 +125,13 @@
                   <string>punctuation.definition.tag.xml</string>
                 </dict>
               </dict>
+              <key>patterns</key>
+              <array>
+                <dict>
+                  <key>include</key>
+                  <string>#defaults</string>
+                </dict>
+              </array>
             </dict>
             <dict>
               <key>match</key>
