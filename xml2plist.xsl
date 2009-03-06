@@ -46,18 +46,33 @@
   </xsl:template>
   
   <xsl:template match="string">
-    <!--
-      FIXME Escape " in string nodes. Or switch to ' and escape these.
-    -->
     <xsl:param name="separator"/>
-    <xsl:text>"</xsl:text>
-    <xsl:value-of select="."/>
-    <xsl:text>"</xsl:text>
+    <xsl:text>'</xsl:text>
+    <xsl:call-template name="escape-quotes">
+      <xsl:with-param name="string" select="."/>
+    </xsl:call-template>
+    <xsl:text>'</xsl:text>
     <xsl:value-of select="$separator"/>
     <xsl:text>
 </xsl:text>
   </xsl:template>
 
   <xsl:template match="text()"/>
+
+  <xsl:template name="escape-quotes">
+    <xsl:param name="string"/>
+      <xsl:choose>
+        <xsl:when test='contains($string, "&apos;")'>
+          <xsl:value-of select='substring-before($string, "&apos;")'/>
+          <xsl:text>''</xsl:text>
+          <xsl:call-template name="escape-quotes">
+            <xsl:with-param name="string" select='substring-after($string, "&apos;")'/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$string"/>
+        </xsl:otherwise>
+      </xsl:choose>
+  </xsl:template>
   
 </xsl:stylesheet>
