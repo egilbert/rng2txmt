@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  TODO completely redesign with grammar expansions in mind?
   TODO add parameter for namespace prefixes
+  FIXME deal with anyName — this broke everything
 -->
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -15,6 +15,8 @@
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
     doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
     doctype-system="http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
+
+    <xsl:key name="not-attribute-ref" match="//define//element//ref" use="generate-id()"/>
 
     <!-- ======================= -->
     <!-- = Regular expressions = -->
@@ -33,7 +35,7 @@
     <!-- match quoted strings -->
     <!-- FIXME deal with \" -->
     <xsl:variable name="DoubleQuotedString"
-      select="'\&quot;[^\&quot;]*\&quot;'"/>
+      select="'&quot;[^&quot;]*&quot;'"/>
 
     <!-- /!\ single/double quotes inverted to avoid XPath failure -->
     <xsl:variable name="SingleQuotedString"
@@ -78,9 +80,17 @@
   </xsl:template>
 
   <!-- = Computes accessible references and return their names as a RTF = -->
-  <xsl:template name="accessible">
+  <xsl:template name="accessible-attributes">
     <xsl:param name="nodes"/>
-    <xsl:variable name="new-nodes" select="$nodes|//define[.//ref/@name=$nodes]/@name"/>
+    <!-- FIXME for attributes, check that we don't include references under elements. With key, probably. -->
+    <xsl:variable name="new-nodes" select="$nodes|//define[.//ref[not(key('not-attribute-ref', generate-id()))]/@name=$nodes]/@name"/>
+    <!-- <xsl:message>
+      Excluded:
+      <xsl:call-template name="to-rtf">
+        <xsl:with-param name="nodes" select="//define//ref[key('not-attribute-ref', generate-id())][@name=$nodes]/@name"/>
+      </xsl:call-template>
+    </xsl:message> -->
+    <!-- <xsl:variable name="new-nodes" select="$nodes|//define[.//ref/@name=$nodes]/@name"/> -->
     <xsl:choose>
       <xsl:when test="count($new-nodes)=count($nodes)">
         <!-- FIXME Either use this function directly for testing    -->
@@ -91,7 +101,27 @@
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="accessible">
+        <xsl:call-template name="accessible-attributes">
+          <xsl:with-param name="nodes" select="$new-nodes"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+  <xsl:template name="accessible-elements">
+    <xsl:param name="nodes"/>
+    <xsl:variable name="new-nodes" select="$nodes|//define[.//ref/@name=$nodes]/@name"/>
+    <xsl:choose>
+      <xsl:when test="count($new-nodes)=count($nodes)">
+        <!-- FIXME Either use this function directly for testing    -->
+        <!-- (and thus compute fix-point each time) or return a RTF -->
+        <!-- and use exslt. The second solution is OK, I guess.     -->
+        <xsl:call-template name="to-rtf">
+          <xsl:with-param name="nodes" select="$nodes" mode="elements"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="accessible-elements">
           <xsl:with-param name="nodes" select="$new-nodes"/>
         </xsl:call-template>
       </xsl:otherwise>
@@ -100,8 +130,11 @@
   
   <!-- = Actually computes accessible elements = -->
   <xsl:variable name="accessible-elements-rtf">
-    <xsl:call-template name="accessible" mode="elements">
-      <xsl:with-param name="nodes" select="//define[.//element]/@name"/>
+    <xsl:call-template name="accessible-elements">
+      <!--
+        FIXME deal with element/anyName
+      -->
+      <xsl:with-param name="nodes" select="//define[.//element[@name]]/@name"/>
     </xsl:call-template>
   </xsl:variable>
   <xsl:variable name="accessible-elements"
@@ -109,8 +142,11 @@
 
   <!-- = Actually computes accessible attributes = -->
   <xsl:variable name="accessible-attributes-rtf">
-    <xsl:call-template name="accessible" mode="attributes">
-      <xsl:with-param name="nodes" select="//define[.//attribute]/@name"/>
+    <xsl:call-template name="accessible-attributes">
+      <!--
+        FIXME deal with attributes/anyName
+      -->
+      <xsl:with-param name="nodes" select="//define[.//attribute[@name]]/@name"/>
     </xsl:call-template>
   </xsl:variable>
   <xsl:variable name="accessible-attributes"
@@ -118,6 +154,14 @@
 
   <xsl:template match="/">
     <plist version="1.0">
+      <xsl:message>
+        Accessible attributes:
+          <xsl:value-of select="$accessible-attributes-rtf"/>
+        Excluded attributes:
+          <xsl:value-of select="//define//ref[key('not-attribute-ref', generate-id(.))]/@name"/>
+        Accessible elements:
+          <xsl:value-of select="$accessible-elements-rtf"/>
+      </xsl:message>
       <dict>
         <!-- TODO find appropriate global scopeName -->
         <key>scopeName</key>
@@ -137,105 +181,102 @@
     </plist>
   </xsl:template>
 
-    <xsl:template match="grammar">
+  <xsl:template match="grammar">
     <xsl:apply-templates select="start"/>
-    <!-- CHANGED check there actually is at least one definition -->
-    <xsl:if test="define">
-      <key>repository</key>
+    <key>repository</key>
+    <dict>
+      <key>defaults</key>
       <dict>
-        <key>defaults</key>
-        <dict>
-          <key>patterns</key>
-          <array>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>begin</key>
+            <string>
+              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:value-of select="$Name"/> <!-- Match tag name -->
+              <xsl:text>)\s*(</xsl:text>
+              <xsl:value-of select="$Attributes"/> <!-- Match attributes -->
+              <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
+            </string>
+            <key>end</key>
+            <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
+            <key>captures</key>
             <dict>
-              <key>begin</key>
-              <string>
-                <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
-                <xsl:value-of select="$Name"/> <!-- Match tag name -->
-                <xsl:text>)\s*(</xsl:text>
-                <xsl:value-of select="$Attributes"/> <!-- Match attributes -->
-                <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
-              </string>
-              <key>end</key>
-              <string>(&lt;/)([-_a-zA-Z0-9:]+)(&gt;)</string>
-              <key>captures</key>
+              <key>1</key>
               <dict>
-                <key>1</key>
-                <dict>
-                  <key>name</key>
-                  <string>punctuation.definition.tag.xml</string>
-                </dict>
-                <key>2</key>
-                <dict>
-                  <key>name</key>
-                  <string>invalid.illegal.tag.xml</string>
-                </dict>
-                <key>3</key>
-                <dict>
-                  <key>name</key>
-                  <string>punctuation.definition.tag.xml</string>
-                </dict>
+                <key>name</key>
+                <string>punctuation.definition.tag.xml</string>
               </dict>
-              <key>patterns</key>
-              <array>
-                <dict>
-                  <key>include</key>
-                  <string>#defaults</string>
-                </dict>
-              </array>
-            </dict>
-            <dict>
-              <key>match</key>
-              <string>
-                <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
-                <xsl:value-of select="$Name"/> <!-- Match tag name -->
-                <xsl:text>)\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
-              </string>
-              <key>captures</key>
+              <key>2</key>
               <dict>
-                <key>1</key>
-                <dict>
-                  <key>name</key>
-                  <string>punctuation.definition.tag.xml</string>
-                </dict>
-                <key>2</key>
-                <dict>
-                  <key>name</key>
-                  <string>invalid.illegal.tag.xml</string>
-                </dict>
-                <key>3</key>
-                <dict>
-                  <key>name</key>
-                  <string>punctuation.definition.tag.xml</string>
-                </dict>
+                <key>name</key>
+                <string>invalid.illegal.tag.xml</string>
+              </dict>
+              <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.tag.xml</string>
               </dict>
             </dict>
-          </array>
-        </dict>
-        <key>attribute-defaults</key>
-        <dict>
-          <key>patterns</key>
-          <array>
-            <dict>
-              <key>match</key>
-              <string>
-                <xsl:value-of select="$Attribute"/>
-              </string>
-              <key>captures</key>
+            <key>patterns</key>
+            <array>
               <dict>
-                <key>1</key>
-                <dict>
-                  <key>name</key>
-                  <string>invalid.illegal.attribute.xml</string>
-                </dict>
+                <key>include</key>
+                <string>#defaults</string>
+              </dict>
+            </array>
+          </dict>
+          <dict>
+            <key>match</key>
+            <string>
+              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:value-of select="$Name"/> <!-- Match tag name -->
+              <xsl:text>)\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
+            </string>
+            <key>captures</key>
+            <dict>
+              <key>1</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.tag.xml</string>
+              </dict>
+              <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.tag.xml</string>
+              </dict>
+              <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.tag.xml</string>
               </dict>
             </dict>
-          </array>
-        </dict>
-        <xsl:apply-templates select="define"/>
-        <xsl:apply-templates select="define" mode="attributes"/>
+          </dict>
+        </array>
       </dict>
-    </xsl:if>
+      <key>attribute-defaults</key>
+      <dict>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>match</key>
+            <string>
+              <xsl:value-of select="$Attribute"/>
+            </string>
+            <key>captures</key>
+            <dict>
+              <key>1</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.attribute.xml</string>
+              </dict>
+            </dict>
+          </dict>
+        </array>
+      </dict>
+      <xsl:apply-templates select="define"/>
+      <xsl:apply-templates select="define" mode="attributes"/>
+    </dict>
   </xsl:template>
 
   <xsl:template match="start">
@@ -250,27 +291,29 @@
   </xsl:template>
 
   <xsl:template match="define">
-    <!--
-      FIXME put test in XPath?
-    -->
+    <xsl:message>
+      Definition: <xsl:value-of select="@name"/>
+      Is accessible: <xsl:value-of select="@name=$accessible-elements"/>
+    </xsl:message>
     <xsl:if test="@name=$accessible-elements">
-    <key><xsl:value-of select="@name"/></key>
-      <dict>
-        <key>patterns</key>
-        <array>
-          <xsl:apply-templates/>
-        </array>
-      </dict>
+      <key><xsl:value-of select="@name"/></key>
+        <dict>
+          <key>patterns</key>
+          <array>
+            <xsl:apply-templates/>
+          </array>
+        </dict>
     </xsl:if>
   </xsl:template>
 
   <xsl:template match="define" mode="attributes">
-    <!--
-      FIXME put test in XPath?
-    -->
+    <xsl:message>
+      Attributes definition: <xsl:value-of select="@name"/>
+      Is accessible: <xsl:value-of select="@name=$accessible-attributes"/>
+    </xsl:message>
     <xsl:if test="@name=$accessible-attributes">
       <key>
-        <xsl:text>attributes-</xsl:text>
+        <xsl:text>attributes-for-</xsl:text>
         <xsl:value-of select="@name"/>
       </key>
       <dict>
@@ -285,19 +328,14 @@
 
   <!-- Effective construction -->
   <xsl:template match="element">
+    <!--
+      FIXME add support for anyName
+    -->
+    <xsl:if test="@name">
     <dict>
       <!--
         FIXME add (clever?) namespace support
-        CHANGED add meta.tag.xml at appropriate place.
-        FIXME try and check both structures.
-
-        <key>name</key>
-        <string>meta.tag.xml</string>
-        FIXME This match the tag, not the structure
-        <key>begin</key>
-        <string>(&lt;?)s*(<xsl:value-of select="@name"/>)</string>
-        <key>end</key>
-        <string>(?&gt;)</string>
+        FIXME add meta.tag.xml at appropriate place.
       -->
       <!-- FIXME suppress next entry (needed for debugging only) -->
       <key>name</key>
@@ -308,9 +346,6 @@
         <xsl:value-of select="@name"/> <!-- Match tag name -->
         <xsl:text>)</xsl:text>
       </string>
-      <!--
-        CHANGED now match quoted strings
-      -->
       <key>end</key>
       <string>
         <xsl:text>(/&gt;)|(?:(&lt;/)(</xsl:text>
@@ -452,17 +487,21 @@
         </dict>
       </dict>
     </dict>
-  </xsl:template>
+  </xsl:if>
+  </xsl:template> <!-- match="element" -->
   
   <xsl:template match="element" mode="attributes">
     <!-- Ignore elements -->
   </xsl:template>
   
   <xsl:template match="attribute" mode="attributes">
+    <xsl:if test="@name">
     <dict>
       <key>name</key>
       <string>
+        <xsl:text>entity.other.attribute-name.</xsl:text>
         <xsl:value-of select="@name"/>
+        <xsl:text>.xml</xsl:text>
       </string>
       <key>match</key>
       <string>
@@ -493,10 +532,10 @@
         </dict>
       </dict>
     </dict>
-  </xsl:template>
+  </xsl:if>
+  </xsl:template> <!-- match="attributes" mode="attributes" -->
   
   <xsl:template match="ref">
-    <!-- CHANGED check for empty references -->
     <xsl:if test="@name=$accessible-elements">
       <dict>
         <key>include</key>
@@ -513,7 +552,7 @@
       <dict>
         <key>include</key>
         <string>
-          <xsl:text>#attributes-</xsl:text>
+          <xsl:text>#attributes-for-</xsl:text>
           <xsl:value-of select="@name"/>
         </string>
       </dict>
