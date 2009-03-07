@@ -140,23 +140,6 @@
   <!-- ===================== -->
   <xsl:template match="/">
     <plist version="1.0">
-      <xsl:message>
-        <att>
-          <xsl:call-template name="to-rtf">
-            <xsl:with-param name="nodes" select="$accessible-attributes"/>
-          </xsl:call-template>
-        </att>
-        <excl>
-          <xsl:call-template name="to-rtf">
-            <xsl:with-param name="nodes" select="//ref[key('not-attribute-ref', generate-id())]/@name"/>
-          </xsl:call-template>
-        </excl>
-        <elt>
-          <xsl:call-template name="to-rtf">
-            <xsl:with-param name="nodes" select="$accessible-elements"/>
-          </xsl:call-template>
-        </elt>
-      </xsl:message>
       <dict>
         <!-- TODO find appropriate global scopeName -->
         <key>scopeName</key>
@@ -588,7 +571,7 @@
 
   <xsl:template match="define">
     <xsl:message>
-      Definition: <xsl:value-of select="@name"/>
+      Element definition: <xsl:value-of select="@name"/>
       Is accessible: <xsl:value-of select="@name=$accessible-elements"/>
     </xsl:message>
     <xsl:if test="@name=$accessible-elements">
