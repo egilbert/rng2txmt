@@ -20,9 +20,9 @@ plist_result="$result_dir/$name.plist"
 
 echo "Generating grammar for $name..."
 xsltproc --output "$xml_result" rng2txmt.xsl "$1";
-echo "Checking validity..."
+echo "Checking validity of XML Property List..."
 plutil -lint "$xml_result";
 echo "Generating old style Property List..."
+# FIXME auto indent $plist_result.
 xsltproc --output "$plist_result" xml2plist.xsl "$xml_result";
-# FIXME auto indent $xml_result. Indent both fails (it not C) and uses tabs.
 echo "Done."
