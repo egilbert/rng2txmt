@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!--
-  plistxml2old
-  Created by Édouard Gilbert on 2009-02-16.
-  Copyright (c) 2009 INRIA Lille — Nord Europe. All rights reserved.
--->
 
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -14,17 +9,19 @@
     <xsl:apply-templates/>
   </xsl:template>
 
+  <!-- The separator parameter is useful for distinguishing arrays and dictionaries. -->
+
   <xsl:template match="array">
     <xsl:param name="separator"/>
     <xsl:text>(
-</xsl:text>
+</xsl:text> <!-- /!\ do not indent to avoid a greater mess -->
     <xsl:apply-templates>
       <xsl:with-param name="separator" select="','"/>
     </xsl:apply-templates>
     <xsl:text>)</xsl:text>
     <xsl:value-of select="$separator"/>
     <xsl:text>
-</xsl:text>
+</xsl:text> <!-- /!\ do not indent to avoid a greater mess -->
   </xsl:template>
   
   <xsl:template match="key">
@@ -35,17 +32,19 @@
   <xsl:template match="dict">
     <xsl:param name="separator"/>
     <xsl:text>{
-</xsl:text>
+</xsl:text> <!-- /!\ do not indent to avoid a greater mess -->
     <xsl:apply-templates>
       <xsl:with-param name="separator" select="';'"/>
     </xsl:apply-templates>
     <xsl:text>}</xsl:text>
     <xsl:value-of select="$separator"/>
     <xsl:text>
-</xsl:text>
+</xsl:text> <!-- /!\ do not indent to avoid a greater mess -->
   </xsl:template>
   
   <xsl:template match="string">
+    <!-- String are displayed between single quotes. -->
+    <!-- Single quotes are escaped automatically.    -->
     <xsl:param name="separator"/>
     <xsl:text>'</xsl:text>
     <xsl:call-template name="escape-quotes">
@@ -59,6 +58,7 @@
 
   <xsl:template match="text()"/>
 
+  <!-- = Escape single quotes = -->
   <xsl:template name="escape-quotes">
     <xsl:param name="string"/>
       <xsl:choose>
