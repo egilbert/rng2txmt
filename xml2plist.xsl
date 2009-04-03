@@ -53,7 +53,7 @@
     <xsl:text>'</xsl:text>
     <xsl:value-of select="$separator"/>
     <xsl:text>
-</xsl:text>
+</xsl:text> <!-- /!\ do not indent to avoid a greater mess -->
   </xsl:template>
 
   <xsl:template match="text()"/>
