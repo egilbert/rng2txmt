@@ -7,10 +7,7 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:rng="http://relaxng.org/ns/structure/1.0"
                 xmlns:annot="http://relaxng.org/ns/compatibility/annotations/1.0"
-                exclude-result-prefixes="rng annot"
-                xmlns:exsl="http://exslt.org/common"
-                extension-element-prefixes="exsl"
-                >
+                exclude-result-prefixes="rng annot">
 
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
               doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
