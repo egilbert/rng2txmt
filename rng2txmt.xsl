@@ -9,8 +9,7 @@
                 xmlns:annot="http://relaxng.org/ns/compatibility/annotations/1.0"
                 exclude-result-prefixes="rng annot"
                 xmlns:exsl="http://exslt.org/common"
-                extension-element-prefixes="exsl"
-                >
+                extension-element-prefixes="exsl">
 
   <xsl:output encoding="UTF-8" indent="yes" method="xml"
               doctype-public="-//Apple Computer//DTD PLIST 1.0//EN"
@@ -72,10 +71,10 @@
 
   <!-- = Computes accessible references and return their names as a RTF = -->
   <!--
-    Function for attributes differs because define//element//attribute may
+    Function for attributes differs because define//element//attribute
     must not be taken into account.
     These function (and the attributes) are needed to avoid definition loops
-    in grammar (those kill TextMate)
+    in grammar (which kill TextMate)
   -->
   <xsl:template name="accessible-attributes">
     <xsl:param name="nodes"/>
@@ -612,36 +611,36 @@
       TODO add (clever?) namespace support
       FIXME add meta.tag.xml at appropriate place (captures 0?).
     -->
+    <!-- This should be something like
+      begin = '(?=<\s*tag\b)'
+      end = '/>|</\s*tag\s*>'
+      patterns = (
+        { begin = '<\s*tag'
+          end = '(?!<=/)(?=>)' # matches when left to > but not when between / and >
+          patterns = ( attributes )
+          begin = '(?!<=/)>'
+          end = '(?=/>|</\s*tag\s*>)'
+          patterns = ( content )
+        }
+      )
+    -->
     <xsl:if test="@name">
       <dict>
         <!-- FIXME fix next entry (needed for debugging only) -->
         <key>name</key>
         <string>meta.tag.<xsl:value-of select="@name"/>.xml</string>
         <key>begin</key>
-        <string>
-          <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+        <string> <!-- Match, but does not consume opening tag -->
+          <xsl:text>(?=&lt;\s*</xsl:text> <!-- Match opening tag -->
           <xsl:value-of select="@name"/> <!-- Match tag name -->
-          <xsl:text>)</xsl:text>
+          <xsl:text>\b)</xsl:text> <!-- Word should not continue -->
         </string>
         <key>end</key>
-        <string>
-          <xsl:text>(?&lt;=/&gt;)|(?:(&lt;/)(</xsl:text> <!-- Match empty node closing or closing tag -->
+        <string> <!-- Match and consume -->
+          <xsl:text>(/&gt;)|(&lt;/)\s*(</xsl:text> <!-- Match empty node closing or closing tag -->
           <xsl:value-of select="@name"/> <!-- Match closing tag name -->
-          <xsl:text>)(&gt;))</xsl:text>
+          <xsl:text>)\s*(&gt;)</xsl:text>
         </string>
-        <key>beginCaptures</key>
-        <dict>
-          <key>1</key>
-          <dict>
-            <key>name</key>
-            <string>punctuation.definition.tag.xml</string>
-          </dict>
-          <key>2</key>
-          <dict>
-            <key>name</key>
-            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
-          </dict>
-        </dict>
         <key>endCaptures</key>
         <dict>
           <key>1</key>
@@ -652,9 +651,14 @@
           <key>2</key>
           <dict>
             <key>name</key>
-            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+            <string>punctuation.definition.tag.xml</string>
           </dict>
           <key>3</key>
+          <dict>
+            <key>name</key>
+            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+          </dict>
+          <key>4</key>
           <dict>
             <key>name</key>
             <string>punctuation.definition.tag.xml</string>
@@ -666,21 +670,26 @@
             <key>name</key>
             <string>meta.attributes.of-<xsl:value-of select="@name"/>.xml</string>
             <key>begin</key>
-            <string>
-              <xsl:text>(?&lt;=&lt;</xsl:text>
-              <xsl:value-of select="@name"/>
+            <string> <!-- Match and consume -->
+              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:value-of select="@name"/> <!-- Match tag name -->
               <xsl:text>)</xsl:text>
             </string>
             <key>end</key>
-            <string>
-              <xsl:text>\s*(/?&gt;)</xsl:text> <!-- Match closing -->
+            <string> <!-- Matches but does not consume -->
+              <xsl:text>(?!&lt;=/)(?=&gt;)</xsl:text> <!-- Match closing -->
             </string>
-            <key>endCaptures</key>
+            <key>beginCaptures</key>
             <dict>
               <key>1</key>
               <dict>
                 <key>name</key>
                 <string>punctuation.definition.tag.xml</string>
+              </dict>
+              <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
               </dict>
             </dict>
             <key>patterns</key>
@@ -698,13 +707,23 @@
             <key>name</key>
             <string>meta.in-tag.<xsl:value-of select="@name"/>.xml</string>
             <key>begin</key>
-            <string>(?&lt;!/&gt;)(?&lt;=&gt;)</string>
+            <string> <!-- Matches and consumes -->
+              <xsl:text>(?!&lt;=/)(&gt;)</xsl:text> <!-- Match closing -->
+            </string>
             <key>end</key>
-            <string>
+            <string> <!-- Matches, but does not consume -->
               <xsl:text>(?=&lt;/\s*</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="@name"/> <!-- Match tag name -->
               <xsl:text>\s*&gt;)</xsl:text> <!-- Match closing tag -->
             </string>
+            <key>beginCaptures</key>
+            <dict>
+              <key>1</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.tag.xml</string>
+              </dict>
+            </dict>
             <key>patterns</key>
             <array>
               <xsl:apply-templates/>
@@ -735,7 +754,7 @@
       </string>
       <key>match</key>
       <string>
-        <xsl:text>(</xsl:text>
+        <xsl:text>\b(</xsl:text> <!-- Should begin a word -->
         <xsl:value-of select="@name"/>
         <xsl:text>)\s*=\s*(?:(</xsl:text>
         <xsl:value-of select="$DoubleQuotedString"/>
