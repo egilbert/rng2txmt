@@ -2,6 +2,8 @@
 <!--
   TODO add parameter for namespace prefixes
   FIXME deal with anyName
+  FIXME deal with unknown tags recursively (as with know tags, except with general name)
+  FIXME deal with attributes with no value (look out for whitespace)
 -->
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -38,7 +40,7 @@
     <xsl:variable name="SingleQuotedString"
       select='"&apos;[^&apos;]*&apos;"'/>
 
-    <!-- FIXME name groups (if groups can be named...)-->
+    <!-- FIXME name groups (if groups can be named...) -->
     <xsl:variable name="Attribute">
       <xsl:text>(</xsl:text>
       <xsl:value-of select="$Name"/>
@@ -339,7 +341,7 @@
           <dict>  <!-- Match unknown tags (not empty) -->
             <key>begin</key>
             <string>
-              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="$Name"/> <!-- Match tag name -->
               <xsl:text>)\s*(</xsl:text>
               <xsl:value-of select="$Attributes"/> <!-- Match attributes -->
@@ -347,7 +349,7 @@
             </string>
             <key>end</key>
             <string>
-              <xsl:text>(&lt;/)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:text>(&lt;/)(\s*)(</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="$Name"/> <!-- Match tag name -->
               <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
             </string>
@@ -361,24 +363,29 @@
               <key>2</key>
               <dict>
                 <key>name</key>
-                <string>invalid.illegal.tag.xml</string>
+                <string>invalid.illegal.whitespace.xml</string>
               </dict>
-              <key>4</key>
+              <key>3</key>
               <dict>
                 <key>name</key>
-                <string>entity.other.attribute-name.xml</string>
+                <string>invalid.illegal.tag.xml</string>
               </dict>
               <key>5</key>
               <dict>
                 <key>name</key>
-                <string>string.quoted.double.xml</string>
+                <string>entity.other.attribute-name.xml</string>
               </dict>
               <key>6</key>
               <dict>
                 <key>name</key>
-                <string>string.quoted.single.xml</string>
+                <string>string.quoted.double.xml</string>
               </dict>
               <key>7</key>
+              <dict>
+                <key>name</key>
+                <string>string.quoted.single.xml</string>
+              </dict>
+              <key>8</key>
               <dict>
                 <key>name</key>
                 <string>punctuation.definition.tag.xml</string>
@@ -394,9 +401,14 @@
               <key>2</key>
               <dict>
                 <key>name</key>
-                <string>invalid.illegal.tag.xml</string>
+                <string>invalid.illegal.whitespace.xml</string>
               </dict>
               <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.tag.xml</string>
+              </dict>
+              <key>4</key>
               <dict>
                 <key>name</key>
                 <string>punctuation.definition.tag.xml</string>
@@ -413,7 +425,7 @@
           <dict>  <!-- Match ill-closed tags -->
             <key>match</key>
             <string>
-              <xsl:text>(&lt;/)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:text>(&lt;/)(\s*)(</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="$Name"/> <!-- Match tag name -->
               <xsl:text>)\s*(&gt;)</xsl:text> <!-- Match closing tag -->
             </string>
@@ -427,9 +439,14 @@
               <key>2</key>
               <dict>
                 <key>name</key>
-                <string>invalid.illegal.tag.xml</string>
+                <string>invalid.illegal.whitespace.xml</string>
               </dict>
               <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.tag.xml</string>
+              </dict>
+              <key>4</key>
               <dict>
                 <key>name</key>
                 <string>punctuation.definition.tag.xml</string>
@@ -439,11 +456,11 @@
           <dict>  <!-- Match unknown empty tags -->
             <key>match</key>
             <string>
-              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="$Name"/> <!-- Match tag name -->
-              <xsl:text>)\s*(</xsl:text>
+              <xsl:text>)\s*</xsl:text>
               <xsl:value-of select="$Attributes"/> <!-- Match attributes -->
-              <xsl:text>)\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
+              <xsl:text>\s*(/&gt;)</xsl:text> <!-- Match closing tag -->
             </string>
             <key>captures</key>
             <dict>
@@ -453,6 +470,11 @@
                 <string>punctuation.definition.tag.xml</string>
               </dict>
               <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.whitespace.xml</string>
+              </dict>
+              <key>3</key>
               <dict>
                 <key>name</key>
                 <string>invalid.illegal.tag.xml</string>
@@ -612,14 +634,14 @@
       FIXME add meta.tag.xml at appropriate place (captures 0?).
     -->
     <!-- This should be something like
-      begin = '(?=<\s*tag\b)'
-      end = '/>|</\s*tag\s*>'
+      begin = '(?=<tag\b)'
+      end = '/>|</tag\s*>'
       patterns = (
-        { begin = '<\s*tag'
-          end = '(?!<=/)(?=>)' # matches when left to > but not when between / and >
+        { begin = '<tag'
+          end = '(?!<=/)(?=>)' <!- matches when left to > but not when between / and > ->
           patterns = ( attributes )
           begin = '(?!<=/)>'
-          end = '(?=/>|</\s*tag\s*>)'
+          end = '(?=/>|</tag\s*>)'
           patterns = ( content )
         }
       )
@@ -637,7 +659,7 @@
         </string>
         <key>end</key>
         <string> <!-- Match and consume -->
-          <xsl:text>(/&gt;)|(&lt;/)\s*(</xsl:text> <!-- Match empty node closing or closing tag -->
+          <xsl:text>(/&gt;)|(&lt;/)(\s*)(</xsl:text> <!-- Match empty node closing or closing tag -->
           <xsl:value-of select="@name"/> <!-- Match closing tag name -->
           <xsl:text>)\s*(&gt;)</xsl:text>
         </string>
@@ -656,11 +678,16 @@
           <key>3</key>
           <dict>
             <key>name</key>
-            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+            <string>invalid.illegal.whitespace.xml</string>
           </dict>
           <key>4</key>
           <dict>
             <key>name</key>
+            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+          </dict>
+          <key>5</key>
+          <dict>
+            <key>name</key >
             <string>punctuation.definition.tag.xml</string>
           </dict>
         </dict>
@@ -671,7 +698,7 @@
             <string>meta.attributes.of-<xsl:value-of select="@name"/>.xml</string>
             <key>begin</key>
             <string> <!-- Match and consume -->
-              <xsl:text>(&lt;)\s*(</xsl:text> <!-- Match opening tag -->
+              <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match opening tag -->
               <xsl:value-of select="@name"/> <!-- Match tag name -->
               <xsl:text>)</xsl:text>
             </string>
@@ -687,6 +714,11 @@
                 <string>punctuation.definition.tag.xml</string>
               </dict>
               <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.whitespace.xml</string>
+              </dict>
+              <key>3</key>
               <dict>
                 <key>name</key>
                 <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
