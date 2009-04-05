@@ -510,7 +510,10 @@
           <dict>
             <key>match</key>
             <string>
-              <xsl:value-of select="$Attribute"/>
+              <xsl:value-of select="$Attribute"/> <!-- Attribute with value -->
+              <xsl:text>|(</xsl:text>
+              <xsl:value-of select="$Name"/> <!-- Attribute without value -->
+              <xsl:text>)</xsl:text>
             </string>
             <key>captures</key>
             <dict>
@@ -528,6 +531,11 @@
               <dict>
                 <key>name</key>
                 <string>string.quoted.single.xml</string>
+              </dict>
+              <key>4</key>
+              <dict>
+                <key>name</key>
+                <string>invalid.illegal.attribute-without-value.xml</string>
               </dict>
             </dict>
           </dict>
@@ -786,12 +794,14 @@
       </string>
       <key>match</key>
       <string>
-        <xsl:text>\b(</xsl:text> <!-- Should begin a word -->
+        <xsl:text>\b(?:(</xsl:text> <!-- Should begin a word -->
         <xsl:value-of select="@name"/>
         <xsl:text>)\s*=\s*(?:(</xsl:text>
         <xsl:value-of select="$DoubleQuotedString"/>
         <xsl:text>)|(</xsl:text>
         <xsl:value-of select="$SingleQuotedString"/>
+        <xsl:text>))|(</xsl:text> <!-- This is the invalid case when a attribute has no value -->
+        <xsl:value-of select="@name"/>
         <xsl:text>))</xsl:text>
       </string>
       <key>captures</key>
@@ -811,9 +821,15 @@
           <key>name</key>
           <string>string.quoted.single.xml</string>
         </dict>
+        <key>4</key>
+        <dict>
+          <key>name</key>
+          <string>invalid.illegal.attribute-without-value.xml</string>
+        </dict>
       </dict>
     </dict>
   </xsl:if>
+  
   </xsl:template> <!-- match="attributes" mode="attributes" -->
   
   <xsl:template match="ref">
