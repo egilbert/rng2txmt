@@ -40,7 +40,7 @@
     <xsl:variable name="SingleQuotedString"
       select='"&apos;[^&apos;]*&apos;"'/>
 
-    <!-- FIXME name groups (if groups can be named...) -->
+    <!-- = Match complete attribute construction = -->
     <xsl:variable name="Attribute">
       <xsl:text>(</xsl:text>
       <xsl:value-of select="$Name"/>
@@ -639,20 +639,6 @@
     <!--
       TODO add support for anyName
       TODO add (clever?) namespace support
-      FIXME add meta.tag.xml at appropriate place (captures 0?).
-    -->
-    <!-- This should be something like
-      begin = '(?=<tag\b)'
-      end = '/>|</tag\s*>'
-      patterns = (
-        { begin = '<tag'
-          end = '(?<!/)(?=>)' <!- matches when left to > but not when between / and > ->
-          patterns = ( attributes )
-          begin = '(?<!/)>'
-          end = '(?=/>|</tag\s*>)'
-          patterns = ( content )
-        }
-      )
     -->
     <xsl:if test="@name">
       <dict>
