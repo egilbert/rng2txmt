@@ -687,7 +687,7 @@
           <key>2</key>
           <dict>
             <key>name</key>
-            <string>meta.scope.between-tag-pair.html</string>
+            <string>meta.scope.between-tag-pair.xml</string>
           </dict>
           <key>3</key>
           <dict>
@@ -850,11 +850,7 @@
     <xsl:if test="@name">
     <dict>
       <key>name</key>
-      <string>
-        <xsl:text>entity.other.attribute-name.</xsl:text>
-        <xsl:value-of select="@name"/>
-        <xsl:text>.xml</xsl:text>
-      </string>
+      <string>entity.other.attribute.<xsl:value-of select="@name"/>.xml</string>
       <key>match</key>
       <string>
         <xsl:text>\b(?:(</xsl:text> <!-- Should begin a word -->
