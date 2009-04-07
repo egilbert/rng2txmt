@@ -640,16 +640,15 @@
       TODO add support for anyName
       TODO add (clever?) namespace support
       FIXME add meta.tag.xml at appropriate place (captures 0?).
-      FIXME add support for between-tags (better auto retunrs à la HTML bundle)
     -->
     <!-- This should be something like
       begin = '(?=<tag\b)'
       end = '/>|</tag\s*>'
       patterns = (
         { begin = '<tag'
-          end = '(?!<=/)(?=>)' <!- matches when left to > but not when between / and > ->
+          end = '(?<!/)(?=>)' <!- matches when left to > but not when between / and > ->
           patterns = ( attributes )
-          begin = '(?!<=/)>'
+          begin = '(?<!/)>'
           end = '(?=/>|</tag\s*>)'
           patterns = ( content )
         }
@@ -658,9 +657,7 @@
     <xsl:if test="@name">
       <dict>
         <!-- Courtesy of HTML/XHTML grammar for matching empty tag pairs -->
-        <!-- FIXME fix next entry (needed for debugging only) -->
-        <key>name</key>
-        <string>meta.tag.inline.<xsl:value-of select="@name"/>.xml</string>
+        <!-- FIXME include attributes patterns -->
         <key>begin</key>
         <string>
           <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match tag opening -->
@@ -724,8 +721,6 @@
         </dict>
       </dict>
       <dict>
-        <key>name</key>
-        <string>meta.tag.<xsl:value-of select="@name"/>.xml</string>
         <key>begin</key>
         <string> <!-- Match, but does not consume opening tag -->
           <xsl:text>(?=&lt;\s*</xsl:text> <!-- Match opening tag -->
@@ -734,12 +729,17 @@
         </string>
         <key>end</key>
         <string> <!-- Match and consume -->
-          <xsl:text>(/&gt;)|(&lt;/)(\s*)(</xsl:text> <!-- Match empty node closing or closing tag -->
+          <xsl:text>(/)(?=&gt;)|(&lt;/)(\s*)(</xsl:text> <!-- Match empty node closing or closing tag -->
           <xsl:value-of select="@name"/> <!-- Match closing tag name -->
-          <xsl:text>)\s*(&gt;)</xsl:text>
+          <xsl:text>)\s*(?=&gt;)</xsl:text>
         </string>
         <key>endCaptures</key>
         <dict>
+          <key>0</key>
+          <dict>
+            <key>name</key>
+            <string>meta.tag.<xsl:value-of select="@name"/>.xml</string>
+          </dict>
           <key>1</key>
           <dict>
             <key>name</key>
@@ -760,16 +760,13 @@
             <key>name</key>
             <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
           </dict>
-          <key>5</key>
-          <dict>
-            <key>name</key >
-            <string>punctuation.definition.tag.xml</string>
-          </dict>
         </dict>
         <key>patterns</key>
         <array>
           <dict>
             <key>name</key>
+            <string>meta.tag.<xsl:value-of select="@name"/>.xml</string>
+            <key>contentName</key>
             <string>meta.attributes.of-<xsl:value-of select="@name"/>.xml</string>
             <key>begin</key>
             <string> <!-- Match and consume -->
@@ -779,7 +776,7 @@
             </string>
             <key>end</key>
             <string> <!-- Matches but does not consume -->
-              <xsl:text>(?!&lt;=/)(?=&gt;)</xsl:text> <!-- Match closing -->
+              <xsl:text>(?=/?&gt;)</xsl:text> <!-- Match closing -->
             </string>
             <key>beginCaptures</key>
             <dict>
@@ -810,12 +807,9 @@
             </array>
           </dict>
           <dict>
-            <!-- FIXME fix next entry (needed for debugging only) -->
-            <key>name</key>
-            <string>meta.in-tag.<xsl:value-of select="@name"/>.xml</string>
             <key>begin</key>
             <string> <!-- Matches and consumes -->
-              <xsl:text>(?!&lt;=/)(&gt;)</xsl:text> <!-- Match closing -->
+              <xsl:text>(?&lt;!/)(?=&gt;)</xsl:text> <!-- Match closing -->
             </string>
             <key>end</key>
             <string> <!-- Matches, but does not consume -->
@@ -833,6 +827,22 @@
             </dict>
             <key>patterns</key>
             <array>
+              <dict>
+                <key>contentName</key>
+                <string>meta.in-tag.<xsl:value-of select="@name"/>.xml</string>
+                <key>begin</key>
+                <string>(&gt;)</string>
+                <key>end</key>
+                <string>(?=&lt;)</string>
+                <key>beginCaptures</key>
+                <dict>
+                  <key>1</key>
+                  <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.tag.xml</string>
+                  </dict>
+                </dict>
+              </dict>
               <xsl:apply-templates/>
               <dict>
                 <key>include</key>
