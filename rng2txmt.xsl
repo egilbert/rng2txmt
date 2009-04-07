@@ -640,6 +640,7 @@
       TODO add support for anyName
       TODO add (clever?) namespace support
       FIXME add meta.tag.xml at appropriate place (captures 0?).
+      FIXME add support for between-tags (better auto retunrs à la HTML bundle)
     -->
     <!-- This should be something like
       begin = '(?=<tag\b)'
@@ -656,14 +657,80 @@
     -->
     <xsl:if test="@name">
       <dict>
+        <!-- Courtesy of HTML/XHTML grammar for matching empty tag pairs -->
         <!-- FIXME fix next entry (needed for debugging only) -->
+        <key>name</key>
+        <string>meta.tag.inline.<xsl:value-of select="@name"/>.xml</string>
+        <key>begin</key>
+        <string>
+          <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match tag opening -->
+          <xsl:value-of select="@name"/>    <!-- Match tag name -->
+          <xsl:text>\b)</xsl:text>          <!-- End of tag name -->
+          <xsl:text>(?=[^&gt;]*&gt;&lt;/</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>&gt;)</xsl:text>
+        </string>
+        <key>end</key>
+        <string>
+          <xsl:text>(&gt;(&lt;)/)(\s*)(</xsl:text> <!-- Match empty node tag closing or regular node tag closing -->
+          <xsl:value-of select="@name"/>           <!-- Match closing tag name -->
+          <xsl:text>)\s*(&gt;)</xsl:text>
+        </string>
+        <key>beginCaptures</key>
+        <dict>
+          <key>1</key>
+          <dict>
+            <key>name</key>
+            <string>punctuation.definition.tag.xml</string>
+          </dict>
+          <key>2</key>
+          <dict>
+            <key>name</key>
+            <string>invalid.illegal.whitespace.xml</string>
+          </dict>
+          <key>3</key>
+          <dict>
+            <key>name</key>
+            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+          </dict>
+        </dict>
+        <key>endCaptures</key>
+        <dict>
+          <key>1</key>
+          <dict>
+            <key>name</key>
+            <string>punctuation.definition.tag.xml</string>
+          </dict>
+          <key>2</key>
+          <dict>
+            <key>name</key>
+            <string>meta.scope.between-tag-pair.html</string>
+          </dict>
+          <key>3</key>
+          <dict>
+            <key>name</key>
+            <string>invalid.illegal.whitespace.xml</string>
+          </dict>
+          <key>4</key>
+          <dict>
+            <key>name</key>
+            <string>entity.name.tag.<xsl:value-of select="@name"/>.xml</string>
+          </dict>
+          <key>5</key>
+          <dict>
+            <key>name</key >
+            <string>punctuation.definition.tag.xml</string>
+          </dict>
+        </dict>
+      </dict>
+      <dict>
         <key>name</key>
         <string>meta.tag.<xsl:value-of select="@name"/>.xml</string>
         <key>begin</key>
         <string> <!-- Match, but does not consume opening tag -->
           <xsl:text>(?=&lt;\s*</xsl:text> <!-- Match opening tag -->
-          <xsl:value-of select="@name"/> <!-- Match tag name -->
-          <xsl:text>\b)</xsl:text> <!-- Word should not continue -->
+          <xsl:value-of select="@name"/>  <!-- Match tag name -->
+          <xsl:text>\b)</xsl:text>        <!-- End of tag -->
         </string>
         <key>end</key>
         <string> <!-- Match and consume -->
