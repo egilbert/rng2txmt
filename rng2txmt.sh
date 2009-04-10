@@ -22,7 +22,8 @@ rng2txmt_transform="$source_dir/rng2txmt.xsl"
 xml2plist_transform="$source_dir/xml2plist.xsl"
 
 echo "Generating grammar for $name..."
-xsltproc --output "$xml_result" "$xsl_transform" "$1";
+xsltproc --output "$xml_result" "$rng2txmt_transform" "$1";
+echo xsltproc --output "$xml_result" "$rng2txmt_transform" "$1";
 echo "Checking validity of XML Property List..."
 plutil -lint "$xml_result";
 echo "Generating old style Property List..."
