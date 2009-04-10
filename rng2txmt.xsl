@@ -4,6 +4,8 @@
   FIXME deal with anyName
   FIXME deal with unknown tags recursively (as with know tags, except with general name)
   FIXME deal with attributes with no value (look out for whitespace)
+  FIXME imrpove dealing tag with no content (for better aut-returns)
+  TODO add completion list
 -->
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -850,7 +852,7 @@
     <xsl:if test="@name">
     <dict>
       <key>name</key>
-      <string>entity.other.attribute.<xsl:value-of select="@name"/>.xml</string>
+      <string>meta.attribute.<xsl:value-of select="@name"/>.xml</string>
       <key>match</key>
       <string>
         <xsl:text>\b(?:(</xsl:text> <!-- Should begin a word -->
