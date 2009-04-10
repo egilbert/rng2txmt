@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!--
-  FIXME deal with anyName
-  FIXME deal with unknown tags recursively (as with know tags, except with general name)
-  FIXME deal with attributes with no value (look out for whitespace)
-  FIXME improve dealing tag with no content (for better aut-returns)
-  TODO add completion list
--->
+
+<!-- ======================= -->
+<!-- = Deals with elements = -->
+<!-- ======================= -->
+
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:rng="http://relaxng.org/ns/structure/1.0"
@@ -165,7 +163,7 @@
             <key>patterns</key>
             <array>
               <!-- Patterns for attributes -->
-              <xsl:apply-templates mode="attributes"/>
+              <xsl:apply-templates mode="attribute"/>
               <dict>
                 <key>include</key>
                 <string>#attribute-defaults</string>
@@ -222,7 +220,7 @@
     </xsl:if>
   </xsl:template> <!-- match="element" -->
   
-  <xsl:template match="element" mode="attributes">
+  <xsl:template match="element" mode="attribute">
     <!-- Ignore elements -->
   </xsl:template>
   

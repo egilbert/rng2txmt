@@ -479,7 +479,7 @@
       </dict>
       <!-- = These were courtesy of XML Grammar = -->
       <xsl:apply-templates select="define"/>
-      <xsl:apply-templates select="define" mode="attributes"/>
+      <xsl:apply-templates select="define" mode="attribute"/>
     </dict>
   </xsl:template>
 
@@ -499,7 +499,7 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="define" mode="attributes">
+  <xsl:template match="define" mode="attribute">
     <xsl:message>
       Attributes definition: <xsl:value-of select="@name"/>
       Is accessible: <xsl:value-of select="@name=$accessible-attributes"/>
@@ -512,7 +512,7 @@
       <dict>
         <key>patterns</key>
         <array>
-          <xsl:apply-templates mode="attributes"/>
+          <xsl:apply-templates mode="attribute"/>
         </array>
       </dict>
     </xsl:if>
@@ -530,7 +530,7 @@
     </xsl:if>
   </xsl:template>
   
-  <xsl:template match="ref" mode="attributes">
+  <xsl:template match="ref" mode="attribute">
     <xsl:if test="@name=$accessible-attributes">
       <dict>
         <key>include</key>
@@ -544,6 +544,6 @@
   
   <!-- Ignore text nodes -->
   <xsl:template match="text()"/>
-  <xsl:template match="text()" mode="attributes"/>
+  <xsl:template match="text()" mode="attribute"/>
   
 </xsl:stylesheet>
