@@ -18,43 +18,31 @@
 
   <xsl:template name="element-rule">
     <xsl:param name="name"/>
+    <xsl:param name="scope-name" select="name"/>
 
     <dict>
       <!-- Courtesy of HTML/XHTML grammar for matching empty tag pairs -->
       <!-- FIXME include attributes patterns -->
       <key>begin</key>
-      <string>
-        <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match tag opening -->
+      <string> <!-- Match, but does not consume opening tag -->
+        <xsl:text>(?=&lt;\s*(</xsl:text>  <!-- Match opening tag -->
         <xsl:value-of select="$name"/>    <!-- Match tag name -->
-        <xsl:text>\b)</xsl:text>          <!-- End of tag name -->
-        <xsl:text>(?=[^&gt;]*&gt;&lt;/\3&gt;)</xsl:text> <!-- Match closing tag -->
+        <xsl:text>)\b)</xsl:text>         <!-- End of tag -->
+        <xsl:text>(?=[^&gt;]*&gt;&lt;/\1&gt;)</xsl:text> <!-- Match closing tag -->
       </string>
       <key>end</key>
-      <string>
-        <xsl:text>(&gt;(&lt;)/)(\s*)</xsl:text> <!-- Match empty node tag closing or regular node tag closing -->
-        <xsl:text>(\3)</xsl:text>               <!-- Match closing tag name -->
-        <xsl:text>\s*(&gt;)</xsl:text>
+      <string> <!-- Match and consume -->
+        <xsl:text>(/)(?=&gt;)|(&lt;/)(\s*)</xsl:text> <!-- Match empty node closing or closing tag -->
+        <xsl:text>(\1)</xsl:text>                     <!-- Match closing tag name -->
+        <xsl:text>\s*(?=&gt;)</xsl:text>
       </string>
-      <key>beginCaptures</key>
-      <dict>
-        <key>1</key>
-        <dict>
-          <key>name</key>
-          <string>punctuation.definition.tag.xml</string>
-        </dict>
-        <key>2</key>
-        <dict>
-          <key>name</key>
-          <string>invalid.illegal.whitespace.xml</string>
-        </dict>
-        <key>3</key>
-        <dict>
-          <key>name</key>
-          <string>entity.name.tag.<xsl:value-of select="$name"/>.xml</string>
-        </dict>
-      </dict>
       <key>endCaptures</key>
       <dict>
+        <key>0</key>
+        <dict>
+          <key>name</key>
+          <string>meta.tag.<xsl:value-of select="$scope-name"/>.xml</string>
+        </dict>
         <key>1</key>
         <dict>
           <key>name</key>
@@ -73,7 +61,7 @@
         <key>4</key>
         <dict>
           <key>name</key>
-          <string>entity.name.tag.<xsl:value-of select="$name"/>.xml</string>
+          <string>entity.name.tag.<xsl:value-of select="$scope-name"/>.xml</string>
         </dict>
         <key>5</key>
         <dict>
@@ -81,55 +69,13 @@
           <string>punctuation.definition.tag.xml</string>
         </dict>
       </dict>
-    </dict>
-    <dict>
-      <key>begin</key>
-      <string> <!-- Match, but does not consume opening tag -->
-        <xsl:text>(?=&lt;\s*</xsl:text> <!-- Match opening tag -->
-        <xsl:value-of select="$name"/>  <!-- Match tag name -->
-        <xsl:text>\b)</xsl:text>        <!-- End of tag -->
-      </string>
-      <key>end</key>
-      <string> <!-- Match and consume -->
-        <xsl:text>(/)(?=&gt;)|(&lt;/)(\s*)(</xsl:text> <!-- Match empty node closing or closing tag -->
-        <xsl:value-of select="$name"/> <!-- Match closing tag name -->
-        <xsl:text>)\s*(?=&gt;)</xsl:text>
-      </string>
-      <key>endCaptures</key>
-      <dict>
-        <key>0</key>
-        <dict>
-          <key>name</key>
-          <string>meta.tag.<xsl:value-of select="$name"/>.xml</string>
-        </dict>
-        <key>1</key>
-        <dict>
-          <key>name</key>
-          <string>punctuation.definition.tag.xml</string>
-        </dict>
-        <key>2</key>
-        <dict>
-          <key>name</key>
-          <string>punctuation.definition.tag.xml</string>
-        </dict>
-        <key>3</key>
-        <dict>
-          <key>name</key>
-          <string>invalid.illegal.whitespace.xml</string>
-        </dict>
-        <key>4</key>
-        <dict>
-          <key>name</key>
-          <string>entity.name.tag.<xsl:value-of select="$name"/>.xml</string>
-        </dict>
-      </dict>
       <key>patterns</key>
       <array>
         <dict>
           <key>name</key>
-          <string>meta.tag.<xsl:value-of select="$name"/>.xml</string>
+          <string>meta.tag.<xsl:value-of select="$scope-name"/>.xml</string>
           <key>contentName</key>
-          <string>meta.attributes.of-<xsl:value-of select="$name"/>.xml</string>
+          <string>meta.attributes.of-<xsl:value-of select="$scope-name"/>.xml</string>
           <key>begin</key>
           <string> <!-- Match and consume -->
             <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match opening tag -->
@@ -155,7 +101,7 @@
             <key>3</key>
             <dict>
               <key>name</key>
-              <string>entity.name.tag.<xsl:value-of select="$name"/>.xml</string>
+              <string>entity.name.tag.<xsl:value-of select="$scope-name"/>.xml</string>
             </dict>
           </dict>
           <key>patterns</key>
@@ -191,7 +137,140 @@
           <array>
             <dict>
               <key>contentName</key>
-              <string>meta.in-tag.<xsl:value-of select="$name"/>.xml</string>
+              <string>meta.in-tag.<xsl:value-of select="$scope-name"/>.xml</string>
+              <key>begin</key>
+              <string>(&gt;)</string>
+              <key>end</key>
+              <string>(?=&lt;)</string>
+              <key>beginCaptures</key>
+              <dict>
+                <key>1</key>
+                <dict>
+                  <key>name</key>
+                  <string>punctuation.definition.tag.xml</string>
+                </dict>
+              </dict>
+            </dict>
+            <!-- <xsl:apply-templates/> -->
+            <dict>
+              <key>include</key>
+              <!-- FIXME ensure non-collision with rng definition names -->
+              <string>#defaults</string>
+            </dict>
+          </array>
+        </dict>
+      </array>
+    </dict>
+    <dict>
+      <key>begin</key>
+      <string> <!-- Match, but does not consume opening tag -->
+        <xsl:text>(?=&lt;\s*(</xsl:text>  <!-- Match opening tag -->
+        <xsl:value-of select="$name"/>    <!-- Match tag name -->
+        <xsl:text>)\b)</xsl:text>         <!-- End of tag -->
+      </string>
+      <key>end</key>
+      <string> <!-- Match and consume -->
+        <xsl:text>(/)(?=&gt;)|(&lt;/)(\s*)(</xsl:text>  <!-- Match empty node closing or closing tag -->
+        <xsl:text>\1</xsl:text>                         <!-- Match closing tag name -->
+        <xsl:text>)\s*(?=&gt;)</xsl:text>
+      </string>
+      <key>endCaptures</key>
+      <dict>
+        <key>0</key>
+        <dict>
+          <key>name</key>
+          <string>meta.tag.<xsl:value-of select="$scope-name"/>.xml</string>
+        </dict>
+        <key>1</key>
+        <dict>
+          <key>name</key>
+          <string>punctuation.definition.tag.xml</string>
+        </dict>
+        <key>2</key>
+        <dict>
+          <key>name</key>
+          <string>punctuation.definition.tag.xml</string>
+        </dict>
+        <key>3</key>
+        <dict>
+          <key>name</key>
+          <string>invalid.illegal.whitespace.xml</string>
+        </dict>
+        <key>4</key>
+        <dict>
+          <key>name</key>
+          <string>entity.name.tag.<xsl:value-of select="$scope-name"/>.xml</string>
+        </dict>
+      </dict>
+      <key>patterns</key>
+      <array>
+        <dict>
+          <key>name</key>
+          <string>meta.tag.<xsl:value-of select="$scope-name"/>.xml</string>
+          <key>contentName</key>
+          <string>meta.attributes.of-<xsl:value-of select="$scope-name"/>.xml</string>
+          <key>begin</key>
+          <string> <!-- Match and consume -->
+            <xsl:text>(&lt;)(\s*)(</xsl:text> <!-- Match opening tag -->
+            <xsl:value-of select="$name"/> <!-- Match tag name -->
+            <xsl:text>)</xsl:text>
+          </string>
+          <key>end</key>
+          <string> <!-- Matches but does not consume -->
+            <xsl:text>(?=/?&gt;)</xsl:text> <!-- Match closing -->
+          </string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.tag.xml</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>invalid.illegal.whitespace.xml</string>
+            </dict>
+            <key>3</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.tag.<xsl:value-of select="$scope-name"/>.xml</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array>
+            <!-- Patterns for attributes -->
+            <xsl:apply-templates mode="attribute"/>
+            <dict>
+              <key>include</key>
+              <string>#attribute-defaults</string>
+            </dict>
+          </array>
+        </dict>
+        <dict>
+          <key>begin</key>
+          <string> <!-- Matches and consumes -->
+            <xsl:text>(?&lt;!/)(?=&gt;)</xsl:text> <!-- Match closing -->
+          </string>
+          <key>end</key>
+          <string> <!-- Matches, but does not consume -->
+            <xsl:text>(?=&lt;/\s*</xsl:text> <!-- Match opening tag -->
+            <xsl:value-of select="$name"/> <!-- Match tag name -->
+            <xsl:text>\s*&gt;)</xsl:text> <!-- Match closing tag -->
+          </string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.tag.xml</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array>
+            <dict>
+              <key>contentName</key>
+              <string>meta.in-tag.<xsl:value-of select="$scope-name"/>.xml</string>
               <key>begin</key>
               <string>(&gt;)</string>
               <key>end</key>
@@ -232,6 +311,10 @@
       <xsl:when test="anyName">
         <xsl:call-template name="element-rule">
           <xsl:with-param name="name" select="$Name"/> <!-- $Name is the constant matching any qualified name-->
+          <xsl:with-param name="scope-name">
+            <xsl:text>anyName-</xsl:text>
+            <xsl:value-of select="generate-id()"/>
+          </xsl:with-param>
         </xsl:call-template>
       </xsl:when>
       <xsl:when test="nsName[@ns]">
