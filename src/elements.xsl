@@ -18,7 +18,7 @@
 
   <xsl:template name="element-rule">
     <xsl:param name="name"/>
-    <xsl:param name="scope-name" select="name"/>
+    <xsl:param name="scope-name" select="$name"/>
 
     <dict>
       <!-- Courtesy of HTML/XHTML grammar for matching empty tag pairs -->
@@ -107,7 +107,9 @@
           <key>patterns</key>
           <array>
             <!-- Patterns for attributes -->
-            <xsl:apply-templates mode="attribute"/>
+            <xsl:apply-templates mode="attribute">
+              <xsl:with-param name="element-name" select="$name"/>
+            </xsl:apply-templates>
             <dict>
               <key>include</key>
               <string>#attribute-defaults</string>
@@ -155,7 +157,7 @@
             <dict>
               <key>include</key>
               <!-- FIXME ensure non-collision with rng definition names -->
-              <string>#defaults</string>
+              <string>#fallback</string>
             </dict>
           </array>
         </dict>

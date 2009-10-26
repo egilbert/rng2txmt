@@ -22,21 +22,26 @@
   <!-- = This template create a rule for an attribute matched by the regular expression $name = -->
   <!-- ======================================================================================== -->
   <xsl:template name="attribute-rule">
+    <xsl:param name="name" select="$name"/>
     <xsl:param name="element-name"/>
     <xsl:param name="scope-name" select="$element-name"/>
+    <xsl:message>Coucou </xsl:message>
+    <xsl:message>
+      <xsl:value-of select="$name"/>
+    </xsl:message>
     <dict>
       <key>name</key>
-      <string>meta.attribute.<xsl:value-of select="$scope-name"/>.xml</string>
+      <string>meta.attribute.of-<xsl:value-of select="$element-name"/>.xml</string>
       <key>match</key>
       <string>
         <xsl:text>\b(?:(</xsl:text> <!-- Should begin a word -->
-        <xsl:value-of select="$element-name"/>
+        <xsl:value-of select="$name"/>
         <xsl:text>)\s*=\s*(?:(</xsl:text>
         <xsl:value-of select="$DoubleQuotedString"/> <!-- Should match values-->
         <xsl:text>)|(</xsl:text>
         <xsl:value-of select="$SingleQuotedString"/>
         <xsl:text>))|(</xsl:text> <!-- This is the invalid case when a attribute has no value -->
-        <xsl:value-of select="$element-name"/>
+        <xsl:value-of select="$name"/>
         <xsl:text>))</xsl:text>
       </string>
       <key>captures</key>
@@ -74,19 +79,23 @@
     TODO Include recursive support for except
   -->
   <xsl:template match="attribute" mode="attribute">
+    <xsl:param name="element-name"/>
     <xsl:choose>
       <xsl:when test="@name">
         <xsl:call-template name="attribute-rule">
-          <xsl:with-param name="element-name" select="@name"/>
+          <xsl:with-param name="name" select="@name"/>
+          <xsl:with-param name="element-name" select="$element-name"/>
         </xsl:call-template>
       </xsl:when>
       <xsl:when test="name">
         <xsl:call-template name="attribute-rule">
-          <xsl:with-param name="element-name" select="name"/>
+          <xsl:with-param name="name" select="name"/>
+          <xsl:with-param name="element-name" select="$element-name"/>
         </xsl:call-template>
       </xsl:when>
       <xsl:when test="anyName">
         <xsl:call-template name="attribute-rule">
+          <xsl:with-param name="name" select="$Name"/>
           <xsl:with-param name="element-name" select="$Name"/> <!-- $Name is the constant matching any qualified name-->
           <xsl:with-param name="scope-name" select="anyName"/>
         </xsl:call-template>
