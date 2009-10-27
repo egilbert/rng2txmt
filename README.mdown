@@ -1,0 +1,81 @@
+RELAX NG to TextMate language  grammar generator
+================================================
+
+The aim of this is to automatically generate *TextMate language grammars* from
+*RELAX&nbsp;NG XML Schemata*. As both TextMate grammars and RELAX&nbsp;NG
+Schemata can be written as XML, our program mainly consists of a XSLT
+transformation.
+
+Note that RELAX&nbsp;NG can be generated from DTDs or W3C XML Schemas using
+tools such as Trang.
+
+Usage
+-----
+
+*Currently, XML namespace are not dealt with. One have to modify the RNG so
+that the RNG namespace is the* default *namespace — both empty and not
+defined. See known issues.*
+
+./rng2txmt.sh schema.rng
+
+Generates the language grammars schema.plist.xml and schema.plist in the
+"Generated Language Grammars" repository.
+
+Prerequisites
+-------------
+
+Everything should run directly on any Mac&nbsp;OS&nbsp;X Leopard. Developer
+Tools might need to be installed.
+
+* xsltproc (compiled with exslt support)
+* plutil
+* a sh compatible shell
+
+Current features
+----------------
+
+What it currently does. Not many things.
+
+* look for and mark invalid tags or attributes under or in a given tag
+* avoid to create empty repository entries
+* give a tag-aware scope for attributes (aim is to generate auto-completion
+lists aside)
+
+Expected features
+-----------------
+
+What I would like it to do at some point.
+
+* improve scope definitions
+* [in progress] have parent-tag-aware scopes for auto-completion of tags, i.e.
+
+        <a> <b/> </a> <!-- b is in a scope related to a -->
+        <b attr="value" /> <!-- attribute is in a scope related to b -->
+* actually generate completion list.
+* have basic namespace support
+
+Known issues
+------------
+
+Issues which are not on considered a priority or currently seem unavoidable.
+
+* TextMate language grammars are deterministic. I thus don’t think it’s
+possible to generate (exact) grammars from non-deterministic RNG schemas.
+However, these are rare in real-life. In particular, both DTDs and
+W3C XML Schemas always are deterministic.
+* Dealing with XML namespace (especially default namespace) in XSLT
+stylesheets is quite a mess. Currently, only the default namespace is dealt
+with. Currently, one thus have to make edits
+* No management of many RNG construction.
+* No management of file reference.
+* No indentation of the generated plist. TextMate can however indent results
+by itself.
+* Probably too many scopes.
+
+Links
+-----
+
+* [RELAX&nbsp;NG](http://www.relaxng.org/), a schema language for XML
+* [TextMate](http://macromates.com/), a text editor for Mac&nbsp;OS&nbsp;X
+* [Trang](http://code.google.com/p/jing-trang/), a XML schema from/to
+RELAX&nbsp;NG converter
