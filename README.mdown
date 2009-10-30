@@ -1,22 +1,22 @@
 RELAX NG to TextMate language  grammar generator
 ================================================
 
-The aim of this is to automatically generate *TextMate language grammars* from
-*RELAX NG XML Schemas*. As both TextMate grammars and RELAX NG
-Schemas can be written as XML, our program mainly consists of a XSLT
-transformation.
+The aim of this is to automatically generate [TextMate][]
+[language grammars][gram] from [RELAX NG XML Schemas][rng]. As both TextMate
+grammars and RELAX NG Schemas can be written as XML, our program mainly
+consists of a XSLT transformation.
 
-Note that RELAX NG can be generated from DTDs or W3C XML Schemas using
-tools such as Trang.
+Note that RELAX NG schemas can be generated from DTDs or W3C XML Schemas using
+tools such as [Trang][].
 
 Usage
 -----
 
-*Currently, XML namespace are not dealt with. One have to modify the RNG so
-that the RNG namespace is the* default *namespace — both empty and not
-defined. See known issues.*
+*Currently, XML namespace are not dealt with. You’ll have to modify your RNG
+schemas so that the RNG namespace is the* default *namespace
+— both empty and not defined. See known issues.*
 
-./rng2txmt.sh schema.rng
+    ./rng2txmt.sh schema.rng
 
 Generates the language grammars schema.plist.xml and schema.plist in the
 "Generated Language Grammars" repository.
@@ -24,17 +24,17 @@ Generates the language grammars schema.plist.xml and schema.plist in the
 Prerequisites
 -------------
 
-Everything should run directly on any Mac OS X Leopard. Developer
-Tools might need to be installed.
+Everything should run directly on Mac OS X 10.5 Leopard. Developer Tools might
+need to be installed.
 
-* xsltproc (compiled with exslt support)
-* plutil
-* a sh compatible shell
+* `xsltproc` (compiled with `exslt` support)
+* `plutil`
+* a `sh` compatible shell
 
 Current features
 ----------------
 
-What it currently does. Not many things.
+What it currently does. Not much.
 
 * look for and mark invalid tags or attributes under or in a given tag
 * avoid to create empty repository entries
@@ -44,13 +44,14 @@ lists aside)
 Expected features
 -----------------
 
-What I would like it to do at some point.
+What I would like it to do at some point in a not-so-far future.
 
 * improve scope definitions
-* [in progress] have parent-tag-aware scopes for auto-completion of tags, i.e.
-
-        <a> <b/> </a> <!-- b is in a scope related to a -->
-        <b attr="value" /> <!-- attribute is in a scope related to b -->
+* **(in progress)** have parent-tag-aware scopes for auto-completion of tags, i.e.
+    
+    `<a> <b/> </a> <!-- b is in a scope related to a -->`
+    
+    `<b attr="value" /> <!-- attribute is in a scope related to b -->`
 * actually generate completion list.
 * have basic namespace support
 
@@ -75,7 +76,13 @@ by itself.
 Links
 -----
 
-* [RELAX NG](http://www.relaxng.org/), a schema language for XML
-* [TextMate](http://macromates.com/), a text editor for Mac OS X
-* [Trang](http://code.google.com/p/jing-trang/), a XML schema from/to
-RELAX NG converter
+* [Relax NG][rng], a schema language for XML
+* [TextMate][], a text editor for Mac OS X
+* [TextMate Language Grammars][gram], the documentation of
+TextMate concerning language grammars
+* [Trang][], a XML Schema and DTDs from/to RELAX NG converter
+
+[rng]: http://www.relaxng.org/
+[TextMate]: http://macromates.com/
+[gram]: http://manual.macromates.com/en/language_grammars
+[Trang]: http://code.google.com/p/jing-trang/
