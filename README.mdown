@@ -2,11 +2,11 @@ RELAX NG to TextMate language  grammar generator
 ================================================
 
 The aim of this is to automatically generate *TextMate language grammars* from
-*RELAX&nbsp;NG XML Schemata*. As both TextMate grammars and RELAX&nbsp;NG
-Schemata can be written as XML, our program mainly consists of a XSLT
+*RELAX NG XML Schemas*. As both TextMate grammars and RELAX NG
+Schemas can be written as XML, our program mainly consists of a XSLT
 transformation.
 
-Note that RELAX&nbsp;NG can be generated from DTDs or W3C XML Schemas using
+Note that RELAX NG can be generated from DTDs or W3C XML Schemas using
 tools such as Trang.
 
 Usage
@@ -24,7 +24,7 @@ Generates the language grammars schema.plist.xml and schema.plist in the
 Prerequisites
 -------------
 
-Everything should run directly on any Mac&nbsp;OS&nbsp;X Leopard. Developer
+Everything should run directly on any Mac OS X Leopard. Developer
 Tools might need to be installed.
 
 * xsltproc (compiled with exslt support)
@@ -75,7 +75,7 @@ by itself.
 Links
 -----
 
-* [RELAX&nbsp;NG](http://www.relaxng.org/), a schema language for XML
-* [TextMate](http://macromates.com/), a text editor for Mac&nbsp;OS&nbsp;X
+* [RELAX NG](http://www.relaxng.org/), a schema language for XML
+* [TextMate](http://macromates.com/), a text editor for Mac OS X
 * [Trang](http://code.google.com/p/jing-trang/), a XML schema from/to
-RELAX&nbsp;NG converter
+RELAX NG converter
